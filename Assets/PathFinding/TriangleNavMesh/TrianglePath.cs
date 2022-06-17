@@ -83,18 +83,22 @@ namespace PathFinding.TriangleNavMesh
                     {
                         if (cross_r0 >= 0)
                         {
+                            //漏斗缩小 更换左顶点
                             leftIndex = i;
                             funnel.SetLeft(side.p0);
                         }
                         else
                         {
+                            //当左边界越过右边界 用当前漏斗的右顶点作为新漏斗的顶点来构造新的漏斗
                             var apex = new Vector3(funnel.RightPortal.x, funnel.RightPortalY, funnel.RightPortal.y);
+                            //并且将该点加入路径点
                             _buffer.Add(apex);
                             funnel.SetApex(apex);
                             i = leftIndex = rightIndex;
                             if (i < count - 1)
                             {
                                 side = SharedSide(i + 1);
+                                //从当前的新漏斗开始继续构造漏斗
                                 funnel = new Funnel(apex, side.p0, side.p1);
                                 continue;
                             }
@@ -110,17 +114,21 @@ namespace PathFinding.TriangleNavMesh
                     {
                         if (cross_l1 <= 0)
                         {
+                            //漏斗缩小 更换右顶点
                             rightIndex = i;
                             funnel.SetRight(side.p1);
                         }
                         else
                         {
+                            //当右边界越过左边界 用当前漏斗的左顶点作为新漏斗的顶点来构造新的漏斗
                             var apex = new Vector3(funnel.LeftPortal.x, funnel.LeftPortalY, funnel.LeftPortal.y);
+                            //并且将该点加入路径点
                             _buffer.Add(apex);
                             funnel.SetApex(apex);
                             i = rightIndex = leftIndex;
                             if (i < count - 1)
                             {
+                                //从当前的新漏斗开始继续构造漏斗
                                 side = SharedSide(i + 1);
                                 funnel = new Funnel(apex, side.p0, side.p1);
                             }
