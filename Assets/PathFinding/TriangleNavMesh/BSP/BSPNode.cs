@@ -133,12 +133,10 @@ namespace PathFinding.TriangleNavMesh.BSP
             _depth = depth;
             _triangles = triangleWraps;
 
-            tree.maxDepth = Math.Max(tree.maxDepth, depth);
+            if (depth > BSPTree.MaxDepth) return;
 
             if (triangleWraps.Count <= MIN_TRI_COUNT) return;
-
-            if (depth > 20) return;
-
+            
             _splitLine = SelectSplittingSegment(triangleWraps);
             _children = new[] {new BSPNode(), new BSPNode()};
             var lTris = new List<TriangleWrap>();

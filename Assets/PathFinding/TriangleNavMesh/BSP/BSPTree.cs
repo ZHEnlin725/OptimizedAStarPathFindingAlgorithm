@@ -5,7 +5,7 @@ namespace PathFinding.TriangleNavMesh.BSP
 {
     public class BSPTree
     {
-        public int maxDepth;
+        public const int MaxDepth = 20;
 
         private BSPNode _root;
 
