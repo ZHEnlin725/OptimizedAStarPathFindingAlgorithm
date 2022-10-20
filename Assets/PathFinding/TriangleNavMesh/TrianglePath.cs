@@ -42,6 +42,8 @@ namespace PathFinding.TriangleNavMesh
             }
         }
 
+        public ProjPlane projPlane;
+
         public Vector3 origin, dest;
 
         private SharedSide _last;
@@ -57,11 +59,15 @@ namespace PathFinding.TriangleNavMesh
             var count = _routes.Count;
             if (count > 0)
             {
+                var matrix = Mathematics.WorldToProjPlaneMatrix(projPlane);
+                var invMatrix = matrix.inverse;
+
                 var route = _routes[count - 1];
                 _last = new SharedSide(dest, dest, route.Origin, route.Dest);
                 count++;
                 var side = (SharedSide) _routes[0];
-                var funnel = new Funnel(origin, side.p0, side.p1);
+                var funnel = new Funnel(origin, Mathematics.TransformPoint(matrix, side.p0),
+                    Mathematics.TransformPoint(matrix, side.p1));
                 int leftIndex = 0, rightIndex = 0;
                 var time = DateTime.Now;
                 for (int i = 1; i < count; i++)
@@ -73,8 +79,8 @@ namespace PathFinding.TriangleNavMesh
                     }
 
                     side = SharedSide(i);
-                    var p0 = ToVector2(side.p0); //左
-                    var p1 = ToVector2(side.p1); //右
+                    var p0 = Mathematics.TransformPoint(matrix, side.p0).ToVector2XZ(); //左
+                    var p1 = Mathematics.TransformPoint(matrix, side.p1).ToVector2XZ(); //右
                     // //小于0在右边 大于0在左边 等于0重叠
                     var cross_l0 = Mathematics.Cross(funnel.LeftVector, p0 - funnel.Apex);
                     var cross_r0 = Mathematics.Cross(funnel.RightVector, p0 - funnel.Apex);
@@ -92,14 +98,15 @@ namespace PathFinding.TriangleNavMesh
                             //当左边界越过右边界 用当前漏斗的右顶点作为新漏斗的顶点来构造新的漏斗
                             var apex = new Vector3(funnel.RightPortal.x, funnel.RightPortalY, funnel.RightPortal.y);
                             //并且将该点加入路径点
-                            _buffer.Add(apex);
+                            _buffer.Add(Mathematics.TransformPoint(invMatrix, apex));
                             funnel.SetApex(apex);
                             i = leftIndex = rightIndex;
                             if (i < count - 1)
                             {
                                 side = SharedSide(i + 1);
                                 //从当前的新漏斗开始继续构造漏斗
-                                funnel = new Funnel(apex, side.p0, side.p1);
+                                funnel = new Funnel(apex, Mathematics.TransformPoint(matrix, side.p0),
+                                    Mathematics.TransformPoint(matrix, side.p1));
                                 continue;
                             }
 
@@ -123,14 +130,15 @@ namespace PathFinding.TriangleNavMesh
                             //当右边界越过左边界 用当前漏斗的左顶点作为新漏斗的顶点来构造新的漏斗
                             var apex = new Vector3(funnel.LeftPortal.x, funnel.LeftPortalY, funnel.LeftPortal.y);
                             //并且将该点加入路径点
-                            _buffer.Add(apex);
+                            _buffer.Add(Mathematics.TransformPoint(invMatrix, apex));
                             funnel.SetApex(apex);
                             i = rightIndex = leftIndex;
                             if (i < count - 1)
                             {
                                 //从当前的新漏斗开始继续构造漏斗
                                 side = SharedSide(i + 1);
-                                funnel = new Funnel(apex, side.p0, side.p1);
+                                funnel = new Funnel(apex, Mathematics.TransformPoint(matrix, side.p0),
+                                    Mathematics.TransformPoint(matrix, side.p1));
                             }
                         }
                     }
@@ -150,8 +158,6 @@ namespace PathFinding.TriangleNavMesh
         public void Clear() => _routes.Clear();
 
         private SharedSide SharedSide(int index) => (SharedSide) (index < Count ? _routes[index] : _last);
-
-        private static Vector2 ToVector2(Vector3 vector3) => new Vector2(vector3.x, vector3.z);
 
         #region Draw Gizmos
 

@@ -33,7 +33,7 @@ namespace PathFinding.TriangleNavMesh
         private List<Triangle> _triangles;
         private Dictionary<Triangle, IList<IRoute<Triangle>>> _triangleRoutes;
 
-        public void Initialize(int[] indices, Vector3[] vertices)
+        public void Initialize(int[] indices, Vector3[] vertices, ProjPlane projPlane = ProjPlane.XZ)
         {
             var length = indices.Length;
 
@@ -98,7 +98,7 @@ namespace PathFinding.TriangleNavMesh
 
             //Init BSP Tree
             _bspTree = new BSPTree();
-            _bspTree.Init(_triangles);
+            _bspTree.Init(_triangles, projPlane);
         }
 
         public IList<IRoute<Triangle>> Routes(Triangle node) =>

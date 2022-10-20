@@ -16,18 +16,21 @@ namespace PathFinding.TriangleNavMesh
         private TriangleMesh triangleMesh;
         private TrianglePathFinder pathfinder;
 
-        public TriangleMeshPathFinding(TriangleMeshData meshData) :
-            this(meshData.indices, meshData.vertices)
+        public TriangleMeshPathFinding(TriangleMeshData meshData, ProjPlane projPlane = ProjPlane.XZ) :
+            this(meshData.indices, meshData.vertices, projPlane)
         {
         }
 
-        public TriangleMeshPathFinding(int[] indices, Vector3[] vertices)
+        public TriangleMeshPathFinding(int[] indices, Vector3[] vertices, ProjPlane projPlane = ProjPlane.XZ)
         {
             pathfinder = new TrianglePathFinder();
-            trianglePath = new TrianglePath();
+            trianglePath = new TrianglePath
+            {
+                projPlane = projPlane
+            };
             triangleMesh = new TriangleMesh();
             // NavMeshUtils.AmendmentSameVertex(indices, vertices);
-            triangleMesh.Initialize(indices, vertices);
+            triangleMesh.Initialize(indices, vertices, projPlane);
         }
 
         public bool Search(Vector3 from, Vector3 to, out IList<Vector3> waypoints)

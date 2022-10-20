@@ -8,18 +8,23 @@ namespace PathFinding.TriangleNavMesh.BSP
         public const int MaxDepth = 20;
 
         private BSPNode _root;
+        private ProjPlane _projPlane;
 
-        public void Init(IList<Triangle> triangles)
+        public void Init(IList<Triangle> triangles, ProjPlane projPlane = ProjPlane.XZ)
         {
             var count = triangles.Count;
-            var triangleWraps = new List<TriangleWrap>(count);
+            var triangleWraps = new List<ProjTriangle>(count);
             for (int i = 0; i < count; i++)
-                triangleWraps.Add(new TriangleWrap(i, triangles[i].V0, triangles[i].V1, triangles[i].V2));
+                triangleWraps.Add(new ProjTriangle(i,
+                    Mathematics.TransformPointTo(projPlane, triangles[i].V0),
+                    Mathematics.TransformPointTo(projPlane, triangles[i].V1),
+                    Mathematics.TransformPointTo(projPlane, triangles[i].V2)));
             _root = new BSPNode();
             _root.Init(this, triangleWraps, 0);
+            _projPlane = projPlane;
         }
 
-        public int TriangleIndex(Vector3 pos) => _root.TriangleIndex(new Vector2(pos.x, pos.z));
+        public int TriangleIndex(Vector3 pos) => _root.TriangleIndex(Mathematics.TransformPointTo(_projPlane, pos).ToVector2XZ());
 
 #if UNITY_EDITOR
         public void OnDrawGizmos(int depth = 0) => _root.OnDrawGizmos(depth);
