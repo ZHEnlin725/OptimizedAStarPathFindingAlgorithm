@@ -5,11 +5,11 @@ using UnityEngine;
 
 namespace PathFinding.TriangleNavMesh
 {
-    public struct SharedSide : IRoute<Triangle>
+    public struct SharedSide<T> : IRoute<T> where T : Triangle
     {
         public Vector3 p0, p1;
 
-        public SharedSide(Vector3 p0, Vector3 p1, Triangle origin, Triangle dest)
+        public SharedSide(Vector3 p0, Vector3 p1, T origin, T dest)
         {
             this.p0 = p0;
             this.p1 = p1;
@@ -19,19 +19,19 @@ namespace PathFinding.TriangleNavMesh
 
         public float Cost => 1;
 
-        public Triangle Origin { get; }
+        public T Origin { get; }
 
-        public Triangle Dest { get; }
+        public T Dest { get; }
     }
 
-    public class TriangleMesh : ITopology<Triangle>
+    public class TriangleMesh<T> : ITopology<T> where T : Triangle
     {
         public int numNodes => _triangles.Count;
 
         private BSPTree _bspTree;
 
         private List<Triangle> _triangles;
-        private Dictionary<Triangle, IList<IRoute<Triangle>>> _triangleRoutes;
+        private Dictionary<Triangle, IList<IRoute<T>>> _triangleRoutes;
 
         public void Initialize(int[] indices, Vector3[] vertices, ProjPlane projPlane = ProjPlane.XZ)
         {
@@ -41,7 +41,7 @@ namespace PathFinding.TriangleNavMesh
 
             //Init Triangles
             _triangles = new List<Triangle>(length / 3);
-            _triangleRoutes = new Dictionary<Triangle, IList<IRoute<Triangle>>>(length * 2 / 3);
+            _triangleRoutes = new Dictionary<Triangle, IList<IRoute<T>>>(length * 2 / 3);
             for (int i = 0; i < length;)
                 _triangles.Add(new Triangle(vertices[indices[i++]], vertices[indices[i++]], vertices[indices[i++]]));
 
@@ -66,18 +66,18 @@ namespace PathFinding.TriangleNavMesh
                     indices1[1] = indices[j++];
                     indices1[2] = indices[j++];
                     if (!Mathematics.HasSharedEdgeIndices(indices0, indices1, out var from, out var to)) continue;
-                    var origin = _triangles[ti];
-                    var dest = _triangles[tj];
+                    var origin = _triangles[ti] as T;
+                    var dest = _triangles[tj] as T;
 
-                    var side0 = new SharedSide(vertices[from], vertices[to], origin, dest);
-                    var side1 = new SharedSide(vertices[to], vertices[from], dest, origin);
+                    var side0 = new SharedSide<T>(vertices[from], vertices[to], origin, dest);
+                    var side1 = new SharedSide<T>(vertices[to], vertices[from], dest, origin);
 
-                    if (!_triangleRoutes.TryGetValue(_triangles[tj], out var routes))
-                        _triangleRoutes.Add(_triangles[tj], routes = new List<IRoute<Triangle>>(3));
+                    if (!_triangleRoutes.TryGetValue(dest, out var routes))
+                        _triangleRoutes.Add(dest, routes = new List<IRoute<T>>(3));
                     routes.Add(side1);
 
-                    if (!_triangleRoutes.TryGetValue(_triangles[ti], out routes))
-                        _triangleRoutes.Add(_triangles[ti], routes = new List<IRoute<Triangle>>(3));
+                    if (!_triangleRoutes.TryGetValue(origin, out routes))
+                        _triangleRoutes.Add(origin, routes = new List<IRoute<T>>(3));
                     routes.Add(side0);
                     if (routes.Count == 3)
                     {
@@ -88,7 +88,7 @@ namespace PathFinding.TriangleNavMesh
 
             for (int i = 0; i < _triangles.Count; i++)
             {
-                if (!_triangleRoutes.TryGetValue(_triangles[i], out var list) || list.Count == 0)
+                if (!_triangleRoutes.TryGetValue(_triangles[i] as T, out var list) || list.Count == 0)
                 {
                     Debug.LogError($"triangle index {i} has no neighbor");
                 }
@@ -101,10 +101,10 @@ namespace PathFinding.TriangleNavMesh
             _bspTree.Init(_triangles, projPlane);
         }
 
-        public IList<IRoute<Triangle>> Routes(Triangle node) =>
+        public IList<IRoute<T>> Routes(T node) =>
             _triangleRoutes.TryGetValue(node, out var routes) ? routes : null;
 
-        public float Estimate(Triangle origin, Triangle dest)
+        public float Estimate(T origin, T dest)
         {
             float dstSqr, minimumDstSqr = float.MaxValue;
             const float half = 0.5f;
@@ -140,13 +140,13 @@ namespace PathFinding.TriangleNavMesh
             return Mathf.Sqrt(minimumDstSqr);
         }
 
-        public Triangle Index(Vector3 pos)
+        public T Index(Vector3 pos)
         {
             if (_bspTree != null)
             {
                 var index = _bspTree.TriangleIndex(pos);
                 if (index >= 0 && index < _triangles.Count)
-                    return _triangles[index];
+                    return _triangles[index] as T;
             }
 
             return null;

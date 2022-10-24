@@ -6,7 +6,7 @@ using Debug = UnityEngine.Debug;
 
 namespace PathFinding.TriangleNavMesh
 {
-    public class TrianglePath : IPath<IRoute<Triangle>>
+    public class TrianglePath<T> : IPath<IRoute<T>> where T : Triangle
     {
         private struct Funnel
         {
@@ -46,11 +46,11 @@ namespace PathFinding.TriangleNavMesh
 
         public Vector3 origin, dest;
 
-        private SharedSide _last;
+        private SharedSide<T> _last;
 
         private List<Vector3> _buffer = new List<Vector3>();
 
-        private List<IRoute<Triangle>> _routes = new List<IRoute<Triangle>>();
+        private List<IRoute<T>> _routes = new List<IRoute<T>>();
 
         public IList<Vector3> Waypoints()
         {
@@ -63,9 +63,9 @@ namespace PathFinding.TriangleNavMesh
                 var invMatrix = matrix.inverse;
 
                 var route = _routes[count - 1];
-                _last = new SharedSide(dest, dest, route.Origin, route.Dest);
+                _last = new SharedSide<T>(dest, dest, route.Origin, route.Dest);
                 count++;
-                var side = (SharedSide) _routes[0];
+                var side = (SharedSide<T>) _routes[0];
                 var funnel = new Funnel(origin, Mathematics.TransformPoint(matrix, side.p0),
                     Mathematics.TransformPoint(matrix, side.p1));
                 int leftIndex = 0, rightIndex = 0;
@@ -151,19 +151,19 @@ namespace PathFinding.TriangleNavMesh
 
         public int Count => _routes.Count;
 
-        public void Add(IRoute<Triangle> node) => _routes.Add(node);
+        public void Add(IRoute<T> node) => _routes.Add(node);
 
         public void Reverse() => _routes.Reverse();
 
         public void Clear() => _routes.Clear();
 
-        private SharedSide SharedSide(int index) => (SharedSide) (index < Count ? _routes[index] : _last);
+        private SharedSide<T> SharedSide(int index) => (SharedSide<T>) (index < Count ? _routes[index] : _last);
 
         #region Draw Gizmos
 
         public void OnDrawGizmos()
         {
-            foreach (SharedSide side in _routes)
+            foreach (SharedSide<T> side in _routes)
             {
                 DrawTriangle(side.Origin);
                 DrawTriangle(side.Dest);
