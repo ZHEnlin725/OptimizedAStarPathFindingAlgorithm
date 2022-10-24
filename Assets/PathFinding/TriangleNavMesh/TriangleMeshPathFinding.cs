@@ -23,14 +23,11 @@ namespace PathFinding.TriangleNavMesh
 
         public TriangleMeshPathFinding(int[] indices, Vector3[] vertices, ProjPlane projPlane = ProjPlane.XZ)
         {
-            pathfinder = new TrianglePathFinder();
-            trianglePath = new TrianglePath
-            {
-                projPlane = projPlane
-            };
             triangleMesh = new TriangleMesh();
             // NavMeshUtils.AmendmentSameVertex(indices, vertices);
             triangleMesh.Initialize(indices, vertices, projPlane);
+            trianglePath = new TrianglePath {projPlane = projPlane};
+            pathfinder = new TrianglePathFinder();
         }
 
         public bool Search(Vector3 from, Vector3 to, out IList<Vector3> waypoints)
