@@ -12,8 +12,8 @@ namespace PathFinding.TriangleNavMesh
         {
         }
 
-        private TrianglePath<Triangle> trianglePath;
-        private TriangleMesh<Triangle> triangleMesh;
+        private TrianglePath trianglePath;
+        private TriangleMesh triangleMesh;
         private TrianglePathFinder pathfinder;
 
         public TriangleMeshPathFinding(TriangleMeshData meshData, ProjPlane projPlane = ProjPlane.XZ) :
@@ -24,10 +24,13 @@ namespace PathFinding.TriangleNavMesh
         public TriangleMeshPathFinding(int[] indices, Vector3[] vertices, ProjPlane projPlane = ProjPlane.XZ)
         {
             pathfinder = new TrianglePathFinder();
-            triangleMesh = new TriangleMesh<Triangle>();
-            triangleMesh.Initialize(indices, vertices, projPlane);
+            trianglePath = new TrianglePath
+            {
+                projPlane = projPlane
+            };
+            triangleMesh = new TriangleMesh();
             // NavMeshUtils.AmendmentSameVertex(indices, vertices);
-            trianglePath = new TrianglePath<Triangle> {projPlane = projPlane};
+            triangleMesh.Initialize(indices, vertices, projPlane);
         }
 
         public bool Search(Vector3 from, Vector3 to, out IList<Vector3> waypoints)
