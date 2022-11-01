@@ -86,7 +86,7 @@ namespace PathFinding.Core
 
             if (origin == null || dest == null)
             {
-                Debug.LogError($"Failed to index origin:{from} or dest:{to}");
+                Debug.LogError($"Failed to index origin {origin == null} :{from} or dest {dest == null}:{to}");
                 return false;
             }
 
@@ -122,9 +122,13 @@ namespace PathFinding.Core
 
         protected virtual bool search(ITopology<T> topology, T origin, T dest)
         {
-            if (signals > 1) return false;
-
             Interlocked.Increment(ref signals);
+
+            if (signals > 1)
+            {
+                Interlocked.Decrement(ref signals);
+                return false;
+            }
 
             initSearch(topology, origin, dest);
 
