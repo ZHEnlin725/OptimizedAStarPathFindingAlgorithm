@@ -20,11 +20,13 @@ namespace PathFinding.Optimized
         private readonly HeapType _heapType;
         private readonly Func<T, T, int> _compareFunc;
 
+        private readonly object synclock = new object();
+
         public int Count
         {
             get
             {
-                lock (_array)
+                lock (synclock)
                 {
                     return _tail;
                 }
@@ -55,7 +57,7 @@ namespace PathFinding.Optimized
 
         public virtual T Peek()
         {
-            lock (_array)
+            lock (synclock)
             {
                 return _tail < Top ? default : _array[Top];
             }
@@ -65,7 +67,7 @@ namespace PathFinding.Optimized
 
         public virtual void Push(T v)
         {
-            lock (_array)
+            lock (synclock)
             {
                 EnsureCapacity(++_tail + Top);
                 Insert(_tail, v);
@@ -77,7 +79,7 @@ namespace PathFinding.Optimized
         {
             for (var i = Top; i < _tail; i++)
             {
-                if (ReferenceEquals(v, _array[i]) || _compareFunc(v, _array[i]) == 0)
+                if (IsValueType ? _compareFunc(v, _array[i]) == 0 : ReferenceEquals(v, _array[i]))
                 {
                     RemoveAt(i);
                     break;
@@ -87,7 +89,7 @@ namespace PathFinding.Optimized
 
         public virtual T RemoveAt(int index)
         {
-            lock (_array)
+            lock (synclock)
             {
                 if (index < Top || index > _tail)
                     return default;
@@ -100,7 +102,7 @@ namespace PathFinding.Optimized
 
         public virtual void Clear(bool total = false)
         {
-            lock (_array)
+            lock (synclock)
             {
                 _tail = 0;
                 if (total) _array = new T[1];
