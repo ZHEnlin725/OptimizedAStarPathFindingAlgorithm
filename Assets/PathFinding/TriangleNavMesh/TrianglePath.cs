@@ -66,7 +66,9 @@ namespace PathFinding.TriangleNavMesh
                 _last = new SharedSide(dest, dest, route.Origin, route.Dest);
                 count++;
                 var side = (SharedSide) _routes[0];
-                var funnel = new Funnel(origin, Mathematics.TransformPoint(matrix, side.p0),
+                var funnel = new Funnel(
+                    Mathematics.TransformPoint(matrix, origin),
+                    Mathematics.TransformPoint(matrix, side.p0),
                     Mathematics.TransformPoint(matrix, side.p1));
                 int leftIndex = 0, rightIndex = 0;
                 var time = DateTime.Now;
@@ -91,7 +93,7 @@ namespace PathFinding.TriangleNavMesh
                         {
                             //漏斗缩小 更换左顶点
                             leftIndex = i;
-                            funnel.SetLeft(side.p0);
+                            funnel.SetLeft(Mathematics.TransformPoint(matrix, side.p0));
                         }
                         else
                         {
@@ -123,7 +125,7 @@ namespace PathFinding.TriangleNavMesh
                         {
                             //漏斗缩小 更换右顶点
                             rightIndex = i;
-                            funnel.SetRight(side.p1);
+                            funnel.SetRight(Mathematics.TransformPoint(matrix, side.p1));
                         }
                         else
                         {
