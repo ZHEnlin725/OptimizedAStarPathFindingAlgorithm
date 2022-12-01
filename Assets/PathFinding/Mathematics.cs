@@ -3,14 +3,6 @@ using UnityEngine;
 
 namespace PathFinding
 {
-    public enum ProjPlane : byte
-    {
-        XY,
-        XZ,
-        YZ,
-        // Custom
-    }
-
     public static class Mathematics
     {
         public struct Matrix
@@ -419,41 +411,6 @@ namespace PathFinding
                 new Vector4(axisX.y, axisY.y, axisZ.y, 0),
                 new Vector4(axisX.z, axisY.z, axisZ.z, 0),
                 new Vector4(0, 0, 0, 1));
-        }
-
-        public static Matrix4x4 WorldToProjPlaneMatrix(ProjPlane projPlane)
-        {
-            Vector2 result = default;
-
-            var eulerAngles = Vector3.zero;
-
-            switch (projPlane)
-            {
-                case ProjPlane.XY:
-                    eulerAngles = new Vector3(-90, 0, 0);
-                    break;
-                case ProjPlane.XZ:
-                    break;
-                case ProjPlane.YZ:
-                    eulerAngles = new Vector3(0, 0, -90);
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
-
-            return InverseRotate(eulerAngles);
-        }
-
-        public static Vector3 TransformPoint(Matrix4x4 matrix, Vector3 point) =>
-            matrix * new Vector4(point.x, point.y, point.z, 1);
-
-        public static Vector3 TransformDirection(Matrix4x4 matrix, Vector3 point) =>
-            matrix * new Vector4(point.x, point.y, point.z, 0);
-
-        public static Vector3 TransformPointTo(ProjPlane projPlane, Vector3 point)
-        {
-            var matrix = WorldToProjPlaneMatrix(projPlane);
-            return TransformPoint(matrix, point);
         }
 
         public static Vector2 ToVector2XZ(this Vector3 vector3, Vector2 offset = default) =>

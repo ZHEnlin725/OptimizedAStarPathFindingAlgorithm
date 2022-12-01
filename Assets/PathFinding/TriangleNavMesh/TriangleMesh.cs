@@ -28,13 +28,30 @@ namespace PathFinding.TriangleNavMesh
     {
         public int numNodes => _triangles.Count;
 
-        private BSPTree _bspTree;
+        protected BSPTree _bspTree;
+        protected Vector3 _planeRotation;
+        protected List<Triangle> _triangles;
+        protected Dictionary<Triangle, IList<IRoute<Triangle>>> _triangleRoutes;
 
-        private List<Triangle> _triangles;
-        private Dictionary<Triangle, IList<IRoute<Triangle>>> _triangleRoutes;
-
-        public void Initialize(int[] indices, Vector3[] vertices, ProjPlane projPlane = ProjPlane.XZ)
+        public Vector3 planeRotation => _planeRotation;
+        
+        public virtual void Initialize(int[] indices, Vector3[] vertices, Vector3 planeRotation = default)
         {
+            InitTriangles(indices, vertices);
+
+            InitRoutes(indices, vertices);
+
+            InitBSP(planeRotation);
+            
+            _planeRotation = planeRotation;
+        }
+
+        protected virtual void InitTriangles(int[] indices, Vector3[] vertices)
+        {
+#if UNITY_EDITOR
+            var now = System.DateTime.Now;
+#endif
+
             var length = indices.Length;
 
             #region Init Triangles
@@ -47,8 +64,18 @@ namespace PathFinding.TriangleNavMesh
 
             #endregion
 
-            #region Init Routes
+#if UNITY_EDITOR
+            Debug.LogError($"Init Triangles Consume {(System.DateTime.Now - now).TotalMilliseconds}ms ！！！");
+#endif
+        }
 
+        protected virtual void InitRoutes(int[] indices, Vector3[] vertices)
+        {
+#if UNITY_EDITOR
+            var now = System.DateTime.Now;
+#endif
+            var length = indices.Length;
+            _triangleRoutes = new Dictionary<Triangle, IList<IRoute<Triangle>>>(length * 2 / 3);
             //Init routes
             var indices0 = new int[3];
             var indices1 = new int[3];
@@ -94,11 +121,22 @@ namespace PathFinding.TriangleNavMesh
                 }
             }
 
-            #endregion
+#if UNITY_EDITOR
+            Debug.LogError($"Init Routes Consume {(System.DateTime.Now - now).TotalMilliseconds}ms ！！！");
+#endif
+        }
 
-            //Init BSP Tree
+        protected virtual void InitBSP(Vector3 planeRotation = default)
+        {
+#if UNITY_EDITOR
+            var now = System.DateTime.Now;
+#endif
             _bspTree = new BSPTree();
-            _bspTree.Init(_triangles, projPlane);
+            _bspTree.Init(_triangles, planeRotation);
+
+#if UNITY_EDITOR
+            Debug.LogError($"Init BSPTree Consume {(System.DateTime.Now - now).TotalMilliseconds}ms ！！！");
+#endif
         }
 
         public IList<IRoute<Triangle>> Routes(Triangle node) =>
@@ -144,7 +182,8 @@ namespace PathFinding.TriangleNavMesh
         {
             if (_bspTree != null)
             {
-                var index = _bspTree.TriangleIndex(pos);
+                var projPos = Mathematics.InverseRotate(_planeRotation).MultiplyPoint(pos).ToVector2XZ();
+                var index = _bspTree.TriangleIndex(projPos);
                 if (index >= 0 && index < _triangles.Count)
                     return _triangles[index];
             }

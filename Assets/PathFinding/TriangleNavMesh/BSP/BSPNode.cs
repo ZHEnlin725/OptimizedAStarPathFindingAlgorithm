@@ -37,8 +37,6 @@ namespace PathFinding.TriangleNavMesh.BSP
     {
         public int Index => _index;
 
-        public Segment[] Borders => _borders;
-
         public Vector2[] Vertices => _vertices;
 
         public Vector2 V0 => _vertices[0];
@@ -46,10 +44,10 @@ namespace PathFinding.TriangleNavMesh.BSP
         public Vector2 V2 => _vertices[2];
 
         private int _index;
-        private Segment[] _borders;
+
         private Vector2[] _vertices;
 
-        public ProjTriangle(int index, Vector3 v0, Vector3 v1, Vector3 v2) 
+        public ProjTriangle(int index, Vector3 v0, Vector3 v1, Vector3 v2)
             : this(index, v0.ToVector2XZ(), v1.ToVector2XZ(), v2.ToVector2XZ())
         {
         }
@@ -58,16 +56,17 @@ namespace PathFinding.TriangleNavMesh.BSP
         {
             _index = index;
             _vertices = new[] {v0, v1, v2};
-            _borders = new[] {new Segment(v0, v1), new Segment(v1, v2), new Segment(v2, v0)};
         }
 
         public bool Intersects(Vector2 p) => Mathematics.Contains(_vertices, p);
 
         public void OnDrawGizmos(Vector3 offset = default)
         {
+#if UNITY_EDITOR
             Gizmos.DrawLine(V0.ToVector3XZ(offset), V1.ToVector3XZ(offset));
             Gizmos.DrawLine(V1.ToVector3XZ(offset), V2.ToVector3XZ(offset));
             Gizmos.DrawLine(V2.ToVector3XZ(offset), V0.ToVector3XZ(offset));
+#endif
         }
     }
 
@@ -127,43 +126,43 @@ namespace PathFinding.TriangleNavMesh.BSP
             return index;
         }
 
-        public void Init(BSPTree tree, List<ProjTriangle> triangleWraps, int id, int depth = 0)
+        public void Init(BSPTree tree, List<ProjTriangle> projTriangles, int id, int depth = 0)
         {
             _id = id;
             _depth = depth;
-            _triangles = triangleWraps;
+            _triangles = projTriangles;
 
             if (depth > BSPTree.MaxDepth) return;
 
-            if (triangleWraps.Count <= MIN_TRI_COUNT) return;
-            
-            _splitLine = SelectSplittingSegment(triangleWraps);
+            if (projTriangles.Count <= MIN_TRI_COUNT) return;
+
+            _splitLine = SelectSplittingSegment(projTriangles);
             _children = new[] {new BSPNode(), new BSPNode()};
             var lTris = new List<ProjTriangle>();
             var rTris = new List<ProjTriangle>();
-            foreach (var wrap in triangleWraps)
+            foreach (var triangle in projTriangles)
             {
-                var side = SplitTriangle(_splitLine, wrap);
+                var side = SplitTriangle(_splitLine, triangle);
                 switch (side)
                 {
                     case Side.Left:
-                        lTris.Add(wrap);
+                        lTris.Add(triangle);
                         break;
                     case Side.Right:
-                        rTris.Add(wrap);
+                        rTris.Add(triangle);
                         break;
                     default:
-                        SplitTriangle(lTris, rTris, wrap);
+                        SplitTriangle(lTris, rTris, triangle);
                         break;
                 }
             }
 
-            LeftChild.Init(tree, lTris, (1 << depth) + LEFT_CHILD_INDEX, depth + 1);
-            RightChild.Init(tree, rTris, (1 << depth) + RIGHT_CHILD_INDEX, depth + 1);
+            LeftChild.Init(tree, lTris, (id << 1) + LEFT_CHILD_INDEX, (depth + 1));
+            RightChild.Init(tree, rTris, (id << 1) + RIGHT_CHILD_INDEX, (depth + 1));
         }
 
-        private List<Vector2> _rVertices = new List<Vector2>();
-        private List<Vector2> _lVertices = new List<Vector2>();
+        private List<Vector2> _rVertices = new List<Vector2>(4);
+        private List<Vector2> _lVertices = new List<Vector2>(4);
 
         private void SplitTriangle(List<ProjTriangle> left, List<ProjTriangle> right,
             ProjTriangle projTriangle)
@@ -274,38 +273,38 @@ namespace PathFinding.TriangleNavMesh.BSP
             }
         }
 
-        private void AddTriangle(ICollection<ProjTriangle> triangleWraps, Vector2 v0,
+        private void AddTriangle(ICollection<ProjTriangle> projTriangles, Vector2 v0,
             Vector2 v1, Vector2 v2, int index)
         {
             if (v0 == v1 || v1 == v2 || v2 == v0) return;
-            triangleWraps.Add(new ProjTriangle(index, v0, v1, v2));
+            projTriangles.Add(new ProjTriangle(index, v0, v1, v2));
         }
 
-        private static Segment SelectSplittingSegment(List<ProjTriangle> triangleWraps)
+        private static Segment SelectSplittingSegment(IReadOnlyCollection<ProjTriangle> projTriangles)
         {
             var minScore = int.MinValue;
             var bestSplittingSegment = new Segment();
             var enumCount = (int) Side.EnumCount;
             var splitCounter = new int[enumCount];
-            var count = triangleWraps.Count;
-            foreach (var triangleWrap in triangleWraps)
+            var count = projTriangles.Count;
+            foreach (var triangle in projTriangles)
             {
-                foreach (var segment in triangleWrap.Borders)
+                var length = triangle.Vertices.Length;
+                for (int i = 0; i < length; i++)
                 {
-                    for (int i = 0; i < enumCount; i++) splitCounter[i] = 0;
-
-                    foreach (var wrap in triangleWraps)
-                        splitCounter[(int) SplitTriangle(segment, wrap)]++;
-
+                    var segment = new Segment(triangle.Vertices[i], triangle.Vertices[(i + 1) % length]);
+                    for (int j = 0; j < enumCount; j++)
+                        splitCounter[j] = 0;
+                    foreach (var projTriangle in projTriangles)
+                        splitCounter[(int) SplitTriangle(segment, projTriangle)]++;
                     var leftCount = splitCounter[(int) Side.Left];
                     var rightCount = splitCounter[(int) Side.Right];
                     var splitCount = splitCounter[(int) Side.Over];
                     if ((leftCount == 0 || rightCount == 0)
                         && leftCount + rightCount == count) continue;
-                    var balanceVal = Math.Abs(leftCount - rightCount);
                     var sameVal = Math.Min(leftCount, rightCount);
+                    var balanceVal = Math.Abs(leftCount - rightCount);
                     var score = sameVal * 3 - balanceVal - splitCount * 2;
-
                     if (score > minScore)
                     {
                         minScore = score;
