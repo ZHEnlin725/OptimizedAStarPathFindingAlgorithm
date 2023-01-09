@@ -7,11 +7,11 @@ namespace PathFinding
 {
     public static class NavMeshUtils
     {
-        private const float Range = 0.2f;
+        private const float Gap = 0.05f;
 
         private static readonly Dictionary<Vector3, int> VertexDict = new Dictionary<Vector3, int>();
 
-        public static void MergeVertices(int[] indices, Vector3[] vertices, out int[] mergedIndices,
+        public static void MergeVertices(IList<int> indices, IList<Vector3> vertices, out int[] mergedIndices,
             out Vector3[] mergedVertices)
         {
             mergedIndices = null;
@@ -20,14 +20,18 @@ namespace PathFinding
             var rawIndices = indices;
             var rawVertices = vertices;
 
+            var tempIndices = new List<int>();
             var tempVertices = new List<Vector3>();
+
+            bool needMerge(Vector3 lhs, Vector3 rhs, float gap) =>
+                (lhs - rhs).sqrMagnitude <= gap;
 
             bool mergeable(Vector3 vertex, float gap, Action<Vector3, int> onmerged = null)
             {
                 var merge = false;
                 for (int i = 0; i < tempVertices.Count; i++)
                 {
-                    if (!((vertex - tempVertices[i]).sqrMagnitude <= gap))
+                    if (!needMerge(vertex, tempVertices[i], gap))
                         continue;
                     merge = true;
                     if (onmerged != null)
@@ -38,22 +42,46 @@ namespace PathFinding
                 return merge;
             }
 
-            tempVertices.AddRange(rawVertices.Where(rawVertex => !mergeable(rawVertex, Range)));
+            tempVertices.AddRange(rawVertices.Where(rawVertex => !mergeable(rawVertex, Gap)));
 
-            mergedIndices = new int[rawIndices.Length];
             mergedVertices = tempVertices.ToArray();
 
-            for (int i = 0; i < rawIndices.Length; i++)
+            const float epsilon = 0.001f;
+
+            for (int i = 0; i < rawIndices.Count;)
+            {
+                var i0 = rawIndices[i++];
+                var i1 = rawIndices[i++];
+                var i2 = rawIndices[i++];
+
+                var v0 = rawVertices[i0];
+                var v1 = rawVertices[i1];
+                var v2 = rawVertices[i2];
+
+                if (needMerge(v0, v1, epsilon)
+                    || needMerge(v1, v2, epsilon)
+                    || needMerge(v2, v0, epsilon))
+                    continue;
+
+                tempIndices.Add(i0);
+                tempIndices.Add(i1);
+                tempIndices.Add(i2);
+            }
+
+            var indicesCount = tempIndices.Count;
+            mergedIndices = new int[indicesCount];
+            for (int i = 0; i < indicesCount; i++)
             {
                 var upvalue_i = i;
                 var upvalue_indices = mergedIndices;
-                if (!mergeable(rawVertices[rawIndices[i]], Range,
+                if (!mergeable(rawVertices[tempIndices[i]], Gap,
                     (v, idx) => upvalue_indices[upvalue_i] = idx))
-                    mergedIndices[i] = rawIndices[i];
+                    mergedIndices[i] = tempIndices[i];
             }
 
             AmendmentSameVertex(mergedIndices, mergedVertices);
-            Debug.Log($"MergedVertices Count:{mergedVertices.Length} , RawVertices Count:{rawVertices.Length}");
+            Debug.Log($"RawIndices Count:{rawIndices.Count} => MergedIndices Count:{mergedIndices.Length}");
+            Debug.Log($"RawVertices Count:{rawVertices.Count} => MergedVertices Count:{mergedVertices.Length}");
         }
 
         public static void AmendmentSameVertex(int[] indices, Vector3[] vertices)
