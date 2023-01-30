@@ -183,7 +183,7 @@ namespace PathFinding.TriangleNavMesh
             if (_bspTree != null)
             {
                 var projPos = Mathematics.InverseRotate(_planeRotation).MultiplyPoint(pos).ToVector2XZ();
-                var index = _bspTree.TriangleIndex(projPos);
+                var index = _bspTree.Query(projPos);
                 if (index >= 0 && index < _triangles.Count)
                     return _triangles[index];
             }
