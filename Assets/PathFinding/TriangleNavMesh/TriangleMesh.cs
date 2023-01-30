@@ -13,15 +13,15 @@ namespace PathFinding.TriangleNavMesh
         {
             this.p0 = p0;
             this.p1 = p1;
-            Origin = origin;
-            Dest = dest;
+            this.origin = origin;
+            this.dest = dest;
         }
 
-        public float Cost => 1;
+        public float cost => 1;
 
-        public Triangle Origin { get; }
+        public Triangle origin { get; }
 
-        public Triangle Dest { get; }
+        public Triangle dest { get; }
     }
 
     public class TriangleMesh : ITopology<Triangle>
@@ -33,8 +33,6 @@ namespace PathFinding.TriangleNavMesh
         protected List<Triangle> _triangles;
         protected Dictionary<Triangle, IList<IRoute<Triangle>>> _triangleRoutes;
 
-        public Vector3 eulerAngles => _eulerAngles;
-        
         public virtual void Initialize(int[] indices, Vector3[] vertices, Vector3 eulerAngles = default)
         {
             InitTriangles(indices, vertices);
@@ -42,7 +40,7 @@ namespace PathFinding.TriangleNavMesh
             InitRoutes(indices, vertices);
 
             InitBSP(eulerAngles);
-            
+
             _eulerAngles = eulerAngles;
         }
 
@@ -146,13 +144,13 @@ namespace PathFinding.TriangleNavMesh
         {
             float dstSqr, minimumDstSqr = float.MaxValue;
             const float half = 0.5f;
-            var startV01 = (origin.V0 + origin.V1) * half;
-            var startV12 = (origin.V1 + origin.V2) * half;
-            var startV20 = (origin.V2 + origin.V0) * half;
+            var startV01 = (origin.v0 + origin.v1) * half;
+            var startV12 = (origin.v1 + origin.v2) * half;
+            var startV20 = (origin.v2 + origin.v0) * half;
 
-            var endV01 = (dest.V0 + dest.V1) * half;
-            var endV12 = (dest.V1 + dest.V2) * half;
-            var endV20 = (dest.V2 + dest.V0) * half;
+            var endV01 = (dest.v0 + dest.v1) * half;
+            var endV12 = (dest.v1 + dest.v2) * half;
+            var endV20 = (dest.v2 + dest.v0) * half;
 
             if ((dstSqr = Mathematics.DistanceSqr(startV01, endV01)) < minimumDstSqr)
                 minimumDstSqr = dstSqr;
@@ -210,16 +208,16 @@ namespace PathFinding.TriangleNavMesh
                 for (int i = 0; i < _triangleRoutes[_triangles[index]].Count; i++)
                 {
                     Gizmos.color = Color.blue;
-                    DrawTriangle(_triangleRoutes[_triangles[index]][i].Dest);
+                    DrawTriangle(_triangleRoutes[_triangles[index]][i].dest);
                 }
             }
         }
 
         public void DrawTriangle(Triangle triangle)
         {
-            Gizmos.DrawLine(triangle.V0, triangle.V1);
-            Gizmos.DrawLine(triangle.V1, triangle.V2);
-            Gizmos.DrawLine(triangle.V2, triangle.V0);
+            Gizmos.DrawLine(triangle.v0, triangle.v1);
+            Gizmos.DrawLine(triangle.v1, triangle.v2);
+            Gizmos.DrawLine(triangle.v2, triangle.v0);
         }
 #endif
 

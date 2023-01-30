@@ -26,7 +26,7 @@ namespace PathFinding.TriangleNavMesh
             triangleMesh = new TriangleMesh();
             // NavMeshUtils.AmendmentSameVertex(indices, vertices);
             triangleMesh.Initialize(indices, vertices, eulerAngles);
-            trianglePath = new TrianglePath {eulerAngles = triangleMesh.eulerAngles};
+            trianglePath = new TrianglePath {eulerAngles = eulerAngles};
             pathfinder = new TrianglePathFinder();
         }
 

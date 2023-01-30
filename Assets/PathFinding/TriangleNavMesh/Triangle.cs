@@ -1,36 +1,48 @@
-﻿using PathFinding.Core;
+﻿using System;
+using PathFinding.Core;
 using UnityEngine;
 
 namespace PathFinding.TriangleNavMesh
 {
     public class Triangle : IPolygon
     {
-        public Vector3 V0
+        public Vector3 v0 => _v0;
+
+        public Vector3 v1 => _v1;
+
+        public Vector3 v2 => _v2;
+
+        public Vector3 this[int index]
         {
-            get => Vertices[0];
-            set => Vertices[0] = value;
+            get
+            {
+                Vector3 result;
+                switch (index)
+                {
+                    case 0:
+                        result = v0;
+                        break;
+                    case 1:
+                        result = v1;
+                        break;
+                    case 2:
+                        result = v2;
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException($"Index {index} Out Of Range !!!");
+                }
+
+                return result;
+            }
         }
 
-        public Vector3 V1
-        {
-            get => Vertices[1];
-            set => Vertices[1] = value;
-        }
-
-        public Vector3 V2
-        {
-            get => Vertices[2];
-            set => Vertices[2] = value;
-        }
-
-        public Vector3 Normal { get; }
-
-        public Vector3[] Vertices { get; }
+        private Vector3 _v0, _v1, _v2;
 
         public Triangle(Vector3 v0, Vector3 v1, Vector3 v2)
         {
-            Vertices = new[] {v0, v1, v2};
-            Normal = Mathematics.CalcNormal(Vertices);
+            _v0 = v0;
+            _v1 = v1;
+            _v2 = v2;
         }
     }
 }

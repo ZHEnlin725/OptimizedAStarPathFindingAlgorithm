@@ -23,14 +23,14 @@ namespace PathFinding.TriangleNavMesh.BSP
             _p1 = p1;
         }
 
-        public Vector2 P0 => _p0;
-        public Vector2 P1 => _p1;
-        public Vector2 Vector => _p1 - _p0;
+        public Vector2 p0 => _p0;
 
-        public override string ToString()
-        {
-            return $"segment [{P0}]=>[{P1}]";
-        }
+        public Vector2 p1 => _p1;
+
+        public Vector2 vector => _p1 - _p0;
+
+        public override string ToString() =>
+            $"segment [{p0}]=>[{p1}]";
     }
 
     public class TriangleRef
@@ -106,7 +106,7 @@ namespace PathFinding.TriangleNavMesh.BSP
             }
             else
             {
-                var cross = Mathematics.Cross(_splitline.Vector, pos - _splitline.P0);
+                var cross = Mathematics.Cross(_splitline.vector, pos - _splitline.p0);
                 if (Math.Abs(cross) < float.Epsilon)
                 {
                     index = RightChild.Query(pos);
@@ -181,7 +181,7 @@ namespace PathFinding.TriangleNavMesh.BSP
                 {
                     if (side_v0 == Side.Left)
                     {
-                        var intersection = Mathematics.Intersection(_splitline.P0, _splitline.P1, v0, v1);
+                        var intersection = Mathematics.Intersection(_splitline.p0, _splitline.p1, v0, v1);
                         _lVertices.Add(intersection);
                         _rVertices.Add(intersection);
                     }
@@ -200,7 +200,7 @@ namespace PathFinding.TriangleNavMesh.BSP
                 {
                     if (side_v0 == Side.Right)
                     {
-                        var intersection = Mathematics.Intersection(_splitline.P0, _splitline.P1, v0, v1);
+                        var intersection = Mathematics.Intersection(_splitline.p0, _splitline.p1, v0, v1);
                         _lVertices.Add(intersection);
                         _rVertices.Add(intersection);
                     }
@@ -318,17 +318,17 @@ namespace PathFinding.TriangleNavMesh.BSP
 
         private static Side SideOfSegment(Segment segment, Vector2 p)
         {
-            var val = Mathematics.Cross(segment.Vector, p - segment.P0);
+            var val = Mathematics.Cross(segment.vector, p - segment.p0);
             if (val == 0) return Side.Over;
             return val > 0 ? Side.Right : Side.Left;
         }
 
         private static Side SideOfSegment(Segment segment, TriangleRef triangleRef)
         {
-            var vector = segment.Vector;
-            var side_a = Mathematics.Cross(vector, triangleRef.V0 - segment.P0);
-            var side_b = Mathematics.Cross(vector, triangleRef.V1 - segment.P0);
-            var side_c = Mathematics.Cross(vector, triangleRef.V2 - segment.P0);
+            var vector = segment.vector;
+            var side_a = Mathematics.Cross(vector, triangleRef.V0 - segment.p0);
+            var side_b = Mathematics.Cross(vector, triangleRef.V1 - segment.p0);
+            var side_c = Mathematics.Cross(vector, triangleRef.V2 - segment.p0);
             var right_side = false;
             if (side_a != 0) right_side = side_a > 0;
             if (side_b != 0) right_side = side_b > 0;

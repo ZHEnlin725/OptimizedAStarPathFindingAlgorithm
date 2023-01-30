@@ -10,8 +10,6 @@ namespace PathFinding.Core
 
     public interface IPath<T> : IPath
     {
-        int Count { get; }
-
         void Add(T node);
 
         void Reverse();

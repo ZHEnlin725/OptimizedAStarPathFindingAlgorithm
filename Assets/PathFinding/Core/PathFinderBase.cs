@@ -69,7 +69,7 @@ namespace PathFinding.Core
                 {
                     path.Add(node.node);
 
-                    node = getOrCreateNode(node.route.Origin);
+                    node = getOrCreateNode(node.route.origin);
                 }
 
                 path.Reverse();
@@ -100,7 +100,7 @@ namespace PathFinding.Core
                 {
                     path.Add(node.route);
 
-                    node = getOrCreateNode(node.route.Origin);
+                    node = getOrCreateNode(node.route.origin);
                 }
 
                 path.Reverse();
@@ -165,9 +165,9 @@ namespace PathFinding.Core
             {
                 var route = routes[i];
                 
-                var destNode = getOrCreateNode(route.Dest);
+                var destNode = getOrCreateNode(route.dest);
 
-                var cost = node.cost + route.Cost;
+                var cost = node.cost + route.cost;
 
                 if (destNode.category == NodeCategory.Opened)
                 {

@@ -2,10 +2,10 @@
 {
     public interface IRoute<T>
     {
-        float Cost { get; }
+        float cost { get; }
 
-        T Origin { get; }
+        T origin { get; }
 
-        T Dest { get; }
+        T dest { get; }
     }
 }

@@ -63,7 +63,7 @@ namespace PathFinding.TriangleNavMesh
                 var invMatrix = matrix.inverse;
 
                 var route = _routes[count - 1];
-                _last = new SharedSide(dest, dest, route.Origin, route.Dest);
+                _last = new SharedSide(dest, dest, route.origin, route.dest);
                 count++;
                 var side = (SharedSide) _routes[0];
                 var funnel = new Funnel(
@@ -151,7 +151,7 @@ namespace PathFinding.TriangleNavMesh
             return _buffer;
         }
 
-        public int Count => _routes.Count;
+        private int cnt => _routes.Count;
 
         public void Add(IRoute<Triangle> node) => _routes.Add(node);
 
@@ -159,7 +159,7 @@ namespace PathFinding.TriangleNavMesh
 
         public void Clear() => _routes.Clear();
 
-        private SharedSide SharedSide(int index) => (SharedSide) (index < Count ? _routes[index] : _last);
+        private SharedSide SharedSide(int index) => (SharedSide) (index < cnt ? _routes[index] : _last);
 
         #region Draw Gizmos
 
@@ -167,8 +167,8 @@ namespace PathFinding.TriangleNavMesh
         {
             foreach (SharedSide side in _routes)
             {
-                DrawTriangle(side.Origin);
-                DrawTriangle(side.Dest);
+                DrawTriangle(side.origin);
+                DrawTriangle(side.dest);
                 var p0 = side.p0 + Vector3.up * 0.1f;
                 var p1 = side.p1 + Vector3.up * 0.1f;
                 var v = p1 - p0;
@@ -182,11 +182,11 @@ namespace PathFinding.TriangleNavMesh
         public void DrawTriangle(Triangle triangle)
         {
             Gizmos.color = Color.yellow;
-            Gizmos.DrawLine(triangle.V0, triangle.V1);
+            Gizmos.DrawLine(triangle.v0, triangle.v1);
             Gizmos.color = Color.blue;
-            Gizmos.DrawLine(triangle.V1, triangle.V2);
+            Gizmos.DrawLine(triangle.v1, triangle.v2);
             Gizmos.color = Color.green;
-            Gizmos.DrawLine(triangle.V2, triangle.V0);
+            Gizmos.DrawLine(triangle.v2, triangle.v0);
         }
 
         #endregion

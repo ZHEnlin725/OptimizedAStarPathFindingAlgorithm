@@ -16,9 +16,9 @@ namespace PathFinding.TriangleNavMesh.BSP
             var matrix = Mathematics.InverseRotate(eulerAngles);
             for (int i = 0; i < count; i++)
                 triangleRefs.Add(new TriangleRef(i,
-                    matrix.MultiplyPoint(triangles[i].V0),
-                    matrix.MultiplyPoint(triangles[i].V1),
-                    matrix.MultiplyPoint(triangles[i].V2)));
+                    matrix.MultiplyPoint(triangles[i].v0),
+                    matrix.MultiplyPoint(triangles[i].v1),
+                    matrix.MultiplyPoint(triangles[i].v2)));
             _root = new BSPNode();
             _root.Init(this, triangleRefs, 1);
         }
