@@ -42,7 +42,7 @@ namespace PathFinding.TriangleNavMesh
             }
         }
 
-        public Vector3 planeRotation;
+        public Vector3 eulerAngles;
         
         public Vector3 origin, dest;
 
@@ -59,7 +59,7 @@ namespace PathFinding.TriangleNavMesh
             var count = _routes.Count;
             if (count > 0)
             {
-                var matrix = Mathematics.InverseRotate(planeRotation);
+                var matrix = Mathematics.InverseRotate(eulerAngles);
                 var invMatrix = matrix.inverse;
 
                 var route = _routes[count - 1];

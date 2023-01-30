@@ -9,11 +9,11 @@ namespace PathFinding.TriangleNavMesh.BSP
 
         private BSPNode _root;
 
-        public void Init(IList<Triangle> triangles, Vector3 planeRotation = default)
+        public void Init(IList<Triangle> triangles, Vector3 eulerAngles = default)
         {
             var count = triangles.Count;
             var triangleRefs = new List<TriangleRef>(count);
-            var matrix = Mathematics.InverseRotate(planeRotation);
+            var matrix = Mathematics.InverseRotate(eulerAngles);
             for (int i = 0; i < count; i++)
                 triangleRefs.Add(new TriangleRef(i,
                     matrix.MultiplyPoint(triangles[i].V0),

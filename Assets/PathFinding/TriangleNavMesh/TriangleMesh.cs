@@ -29,21 +29,21 @@ namespace PathFinding.TriangleNavMesh
         public int numNodes => _triangles.Count;
 
         protected BSPTree _bspTree;
-        protected Vector3 _planeRotation;
+        protected Vector3 _eulerAngles;
         protected List<Triangle> _triangles;
         protected Dictionary<Triangle, IList<IRoute<Triangle>>> _triangleRoutes;
 
-        public Vector3 planeRotation => _planeRotation;
+        public Vector3 eulerAngles => _eulerAngles;
         
-        public virtual void Initialize(int[] indices, Vector3[] vertices, Vector3 planeRotation = default)
+        public virtual void Initialize(int[] indices, Vector3[] vertices, Vector3 eulerAngles = default)
         {
             InitTriangles(indices, vertices);
 
             InitRoutes(indices, vertices);
 
-            InitBSP(planeRotation);
+            InitBSP(eulerAngles);
             
-            _planeRotation = planeRotation;
+            _eulerAngles = eulerAngles;
         }
 
         protected virtual void InitTriangles(int[] indices, Vector3[] vertices)
@@ -126,13 +126,13 @@ namespace PathFinding.TriangleNavMesh
 #endif
         }
 
-        protected virtual void InitBSP(Vector3 planeRotation = default)
+        protected virtual void InitBSP(Vector3 eulerAngles = default)
         {
 #if UNITY_EDITOR
             var now = System.DateTime.Now;
 #endif
             _bspTree = new BSPTree();
-            _bspTree.Init(_triangles, planeRotation);
+            _bspTree.Init(_triangles, eulerAngles);
 
 #if UNITY_EDITOR
             Debug.LogError($"Init BSPTree Consume {(System.DateTime.Now - now).TotalMilliseconds}ms ！！！");
@@ -182,7 +182,7 @@ namespace PathFinding.TriangleNavMesh
         {
             if (_bspTree != null)
             {
-                var projPos = Mathematics.InverseRotate(_planeRotation).MultiplyPoint(pos).ToVector2XZ();
+                var projPos = Mathematics.InverseRotate(_eulerAngles).MultiplyPoint(pos).ToVector2XZ();
                 var index = _bspTree.Query(projPos);
                 if (index >= 0 && index < _triangles.Count)
                     return _triangles[index];

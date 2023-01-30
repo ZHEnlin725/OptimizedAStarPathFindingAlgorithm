@@ -16,17 +16,17 @@ namespace PathFinding.TriangleNavMesh
         private TriangleMesh triangleMesh;
         private TrianglePathFinder pathfinder;
 
-        public TriangleMeshPathFinding(TriangleMeshData meshData,  Vector3 planeRotation = default) :
-            this(meshData.indices, meshData.vertices, planeRotation)
+        public TriangleMeshPathFinding(TriangleMeshData meshData,  Vector3 eulerAngles = default) :
+            this(meshData.indices, meshData.vertices, eulerAngles)
         {
         }
 
-        public TriangleMeshPathFinding(int[] indices, Vector3[] vertices, Vector3 planeRotation = default)
+        public TriangleMeshPathFinding(int[] indices, Vector3[] vertices, Vector3 eulerAngles = default)
         {
             triangleMesh = new TriangleMesh();
             // NavMeshUtils.AmendmentSameVertex(indices, vertices);
-            triangleMesh.Initialize(indices, vertices, planeRotation);
-            trianglePath = new TrianglePath {planeRotation = triangleMesh.planeRotation};
+            triangleMesh.Initialize(indices, vertices, eulerAngles);
+            trianglePath = new TrianglePath {eulerAngles = triangleMesh.eulerAngles};
             pathfinder = new TrianglePathFinder();
         }
 
