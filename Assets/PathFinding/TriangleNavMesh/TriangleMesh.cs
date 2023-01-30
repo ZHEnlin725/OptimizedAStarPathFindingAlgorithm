@@ -176,12 +176,12 @@ namespace PathFinding.TriangleNavMesh
             return Mathf.Sqrt(minimumDstSqr);
         }
 
-        public Triangle Index(Vector3 pos)
+        public Triangle Query(Vector3 pos)
         {
             if (_bspTree != null)
             {
-                var projPos = Mathematics.InverseRotate(_eulerAngles).MultiplyPoint(pos).ToVector2XZ();
-                var index = _bspTree.Query(projPos);
+                var point = Mathematics.InverseRotate(_eulerAngles).MultiplyPoint(pos).ToVector2XZ();
+                var index = _bspTree.Query(point);
                 if (index >= 0 && index < _triangles.Count)
                     return _triangles[index];
             }

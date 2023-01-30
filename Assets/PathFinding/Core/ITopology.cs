@@ -7,7 +7,7 @@ namespace PathFinding.Core
     {
         int numNodes { get; }
 
-        T Index(Vector3 position);
+        T Query(Vector3 position);
 
         float Estimate(T from, T to);
 

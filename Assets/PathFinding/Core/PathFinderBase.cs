@@ -51,7 +51,7 @@ namespace PathFinding.Core
 
         public bool Search(ITopology<T> topology, Vector3 from, Vector3 to, IPath<T> path)
         {
-            T origin = topology.Index(from), dest = topology.Index(to);
+            T origin = topology.Query(from), dest = topology.Query(to);
 
             if (origin == null || dest == null)
             {
@@ -82,7 +82,7 @@ namespace PathFinding.Core
 
         public bool Search(ITopology<T> topology, Vector3 from, Vector3 to, IPath<IRoute<T>> path)
         {
-            T origin = topology.Index(from), dest = topology.Index(to);
+            T origin = topology.Query(from), dest = topology.Query(to);
 
             if (origin == null || dest == null)
             {
