@@ -30,7 +30,7 @@ namespace PathFinding.TriangleNavMesh.BSP
         }
     }
 
-    public class TriangleRef
+    public struct TriangleRef
     {
         public int refIndex;
         public Vector2 v0, v1, v2;
