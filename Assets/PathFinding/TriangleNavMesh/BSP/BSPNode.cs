@@ -63,7 +63,7 @@ namespace PathFinding.TriangleNavMesh.BSP
                         result = v2;
                         break;
                     default:
-                        throw new ArgumentOutOfRangeException();
+                        throw new ArgumentOutOfRangeException($"Index {i} Out Of Range !!!");
                 }
 
                 return result;
