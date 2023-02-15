@@ -8,15 +8,12 @@ namespace PathFinding.TriangleNavMesh
 {
     public class TriangleMeshPathFinding
     {
-        private class TrianglePathFinder : PathFinderBase<Triangle>
-        {
-        }
+        private readonly TrianglePathFinder pathfinder;
+        private readonly TriangleMesh triangleMesh;
 
-        private TrianglePath trianglePath;
-        private TriangleMesh triangleMesh;
-        private TrianglePathFinder pathfinder;
+        private readonly TrianglePath trianglePath;
 
-        public TriangleMeshPathFinding(TriangleMeshData meshData,  Vector3 eulerAngles = default) :
+        public TriangleMeshPathFinding(TriangleMeshData meshData, Vector3 eulerAngles = default) :
             this(meshData.indices, meshData.vertices, eulerAngles)
         {
         }
@@ -47,7 +44,7 @@ namespace PathFinding.TriangleNavMesh
         public async void SearchAsync(Vector3 from, Vector3 to, Action<IList<Vector3>> succeedCallback,
             Action failedCallback)
         {
-            using (var searchTask = Task.Run(() => pathfinder.Search(triangleMesh, @from, to, trianglePath)))
+            using (var searchTask = Task.Run(() => pathfinder.Search(triangleMesh, from, to, trianglePath)))
             {
                 if (await searchTask)
                 {
@@ -70,6 +67,10 @@ namespace PathFinding.TriangleNavMesh
         public void DrawMesh()
         {
             triangleMesh.OnDrawGizmos();
+        }
+
+        private class TrianglePathFinder : PathFinderBase<Triangle>
+        {
         }
     }
 }

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
-using Debug = UnityEngine.Debug;
 
 namespace PathFinding.TriangleNavMesh.BSP
 {
@@ -15,57 +14,82 @@ namespace PathFinding.TriangleNavMesh.BSP
 
     public struct Segment
     {
-        private Vector2 _p0, _p1;
+        public Vector2 p0, p1;
 
         public Segment(Vector2 p0, Vector2 p1)
         {
-            _p0 = p0;
-            _p1 = p1;
+            this.p0 = p0;
+            this.p1 = p1;
         }
 
-        public Vector2 p0 => _p0;
+        public Vector2 vector => p1 - p0;
 
-        public Vector2 p1 => _p1;
-
-        public Vector2 vector => _p1 - _p0;
-
-        public override string ToString() =>
-            $"segment [{p0}]=>[{p1}]";
+        public override string ToString()
+        {
+            return $"segment [{p0}]=>[{p1}]";
+        }
     }
 
     public class TriangleRef
     {
-        public int Index => _index;
+        public int refIndex;
+        public Vector2 v0, v1, v2;
 
-        public Vector2[] Vertices => _vertices;
-
-        public Vector2 V0 => _vertices[0];
-        public Vector2 V1 => _vertices[1];
-        public Vector2 V2 => _vertices[2];
-
-        private int _index;
-
-        private Vector2[] _vertices;
-
-        public TriangleRef(int index, Vector3 v0, Vector3 v1, Vector3 v2)
-            : this(index, v0.ToVector2XZ(), v1.ToVector2XZ(), v2.ToVector2XZ())
+        public TriangleRef(int refIndex, Vector3 v0, Vector3 v1, Vector3 v2)
+            : this(refIndex, v0.ToVector2XZ(), v1.ToVector2XZ(), v2.ToVector2XZ())
         {
         }
 
-        public TriangleRef(int index, Vector2 v0, Vector2 v1, Vector2 v2)
+        public TriangleRef(int refIndex, Vector2 v0, Vector2 v1, Vector2 v2)
         {
-            _index = index;
-            _vertices = new[] {v0, v1, v2};
+            this.refIndex = refIndex;
+            (this.v0, this.v1, this.v2) = (v0, v1, v2);
         }
 
-        public bool Intersects(Vector2 p) => Mathematics.Contains(_vertices, p);
+        public Vector2 this[int i]
+        {
+            get
+            {
+                Vector2 result;
+                switch (i)
+                {
+                    case 0:
+                        result = v0;
+                        break;
+                    case 1:
+                        result = v1;
+                        break;
+                    case 2:
+                        result = v2;
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+
+                return result;
+            }
+        }
+
+        public bool Intersects(Vector2 point)
+        {
+            var result = false;
+            const int length = 3;
+            float x = point.x, y = point.y;
+            for (int i = 0, j = length - 1; i < length; j = i++)
+                if (this[i].y > y != this[j].y > y &&
+                    x < (this[j].x - this[i].x) * (y - this[i].y) / (this[j].y - this[i].y) +
+                    this[i].x)
+                    result = !result;
+
+            return result;
+        }
 
         public void OnDrawGizmos(Vector3 offset = default)
         {
 #if UNITY_EDITOR
-            Gizmos.DrawLine(V0.ToVector3XZ(offset), V1.ToVector3XZ(offset));
-            Gizmos.DrawLine(V1.ToVector3XZ(offset), V2.ToVector3XZ(offset));
-            Gizmos.DrawLine(V2.ToVector3XZ(offset), V0.ToVector3XZ(offset));
+            Gizmos.DrawLine(v0.ToVector3XZ(offset), v1.ToVector3XZ(offset));
+            Gizmos.DrawLine(v1.ToVector3XZ(offset), v2.ToVector3XZ(offset));
+            Gizmos.DrawLine(v2.ToVector3XZ(offset), v0.ToVector3XZ(offset));
 #endif
         }
     }
@@ -76,13 +100,16 @@ namespace PathFinding.TriangleNavMesh.BSP
 
         private const int LEFT_CHILD_INDEX = 0;
         private const int RIGHT_CHILD_INDEX = 1;
-
-        private int _id;
+        private BSPNode[] _children;
 
         private int _depth;
 
+        private int _id;
+        private readonly List<Vector2> _lVertices = new List<Vector2>(4);
+
+        private readonly List<Vector2> _rVertices = new List<Vector2>(4);
+
         private Segment _splitline;
-        private BSPNode[] _children;
         private List<TriangleRef> _triangles;
 
         public bool IsLeaf => _children == null;
@@ -100,7 +127,7 @@ namespace PathFinding.TriangleNavMesh.BSP
                 foreach (var triangle in _triangles)
                 {
                     if (!triangle.Intersects(pos)) continue;
-                    index = triangle.Index;
+                    index = triangle.refIndex;
                     break;
                 }
             }
@@ -157,12 +184,9 @@ namespace PathFinding.TriangleNavMesh.BSP
                 }
             }
 
-            LeftChild.Init(tree, lTris, (id << 1) + LEFT_CHILD_INDEX, (depth + 1));
-            RightChild.Init(tree, rTris, (id << 1) + RIGHT_CHILD_INDEX, (depth + 1));
+            LeftChild.Init(tree, lTris, (id << 1) + LEFT_CHILD_INDEX, depth + 1);
+            RightChild.Init(tree, rTris, (id << 1) + RIGHT_CHILD_INDEX, depth + 1);
         }
-
-        private List<Vector2> _rVertices = new List<Vector2>(4);
-        private List<Vector2> _lVertices = new List<Vector2>(4);
 
         private void SplitTriangle(List<TriangleRef> left, List<TriangleRef> right,
             TriangleRef triangleRef)
@@ -171,11 +195,11 @@ namespace PathFinding.TriangleNavMesh.BSP
             _lVertices.Clear();
 
             var numVertices = 3;
-            var v0 = triangleRef.Vertices[numVertices - 1];
+            var v0 = triangleRef[numVertices - 1];
             var side_v0 = SideOfSegment(_splitline, v0);
-            for (int i = 0; i < numVertices; i++)
+            for (var i = 0; i < numVertices; i++)
             {
-                var v1 = triangleRef.Vertices[i];
+                var v1 = triangleRef[i];
                 var side_v1 = SideOfSegment(_splitline, v1);
                 if (side_v1 == Side.Right)
                 {
@@ -188,10 +212,8 @@ namespace PathFinding.TriangleNavMesh.BSP
                     else if (side_v0 == Side.Over)
                     {
                         if (_rVertices.Count == 0 || _rVertices[_rVertices.Count - 1] != v0)
-                        {
                             _rVertices.Add(v0);
-                            // Debug.Log("Add rVertex 1");
-                        }
+                        // Debug.Log("Add rVertex 1");
                     }
 
                     _rVertices.Add(v1);
@@ -207,10 +229,8 @@ namespace PathFinding.TriangleNavMesh.BSP
                     else if (side_v0 == Side.Over)
                     {
                         if (_lVertices.Count == 0 || _lVertices[_lVertices.Count - 1] != v0)
-                        {
                             _lVertices.Add(v0);
-                            // Debug.Log("Add lVertex 1");
-                        }
+                        // Debug.Log("Add lVertex 1");
                     }
 
                     _lVertices.Add(v1);
@@ -220,18 +240,14 @@ namespace PathFinding.TriangleNavMesh.BSP
                     if (side_v0 == Side.Right)
                     {
                         if (!(_rVertices.Count == 3 && _rVertices[0] == v1))
-                        {
                             _rVertices.Add(v1);
-                            // Debug.Log("Add rVertex 2");
-                        }
+                        // Debug.Log("Add rVertex 2");
                     }
                     else if (side_v0 == Side.Left)
                     {
                         if (!(_lVertices.Count == 3 && _lVertices[0] == v1))
-                        {
                             _lVertices.Add(v1);
-                            // Debug.Log("Add lVertex 2");
-                        }
+                        // Debug.Log("Add lVertex 2");
                     }
                 }
 
@@ -248,13 +264,13 @@ namespace PathFinding.TriangleNavMesh.BSP
             {
                 if (right_vertices_count == 3)
                 {
-                    AddTriangle(right, _rVertices[0], _rVertices[1], _rVertices[2], triangleRef.Index);
+                    AddTriangle(right, _rVertices[0], _rVertices[1], _rVertices[2], triangleRef.refIndex);
                 }
                 else
                 {
                     Debug.Assert(right_vertices_count == 4, $"Impossible vertices count {right_vertices_count}");
-                    AddTriangle(right, _rVertices[0], _rVertices[1], _rVertices[2], triangleRef.Index);
-                    AddTriangle(right, _rVertices[0], _rVertices[2], _rVertices[3], triangleRef.Index);
+                    AddTriangle(right, _rVertices[0], _rVertices[1], _rVertices[2], triangleRef.refIndex);
+                    AddTriangle(right, _rVertices[0], _rVertices[2], _rVertices[3], triangleRef.refIndex);
                 }
             }
 
@@ -262,13 +278,13 @@ namespace PathFinding.TriangleNavMesh.BSP
             {
                 if (left_vertices_count == 3)
                 {
-                    AddTriangle(left, _lVertices[0], _lVertices[1], _lVertices[2], triangleRef.Index);
+                    AddTriangle(left, _lVertices[0], _lVertices[1], _lVertices[2], triangleRef.refIndex);
                 }
                 else
                 {
                     Debug.Assert(left_vertices_count == 4, $"Impossible vertices count {left_vertices_count}");
-                    AddTriangle(left, _lVertices[0], _lVertices[1], _lVertices[2], triangleRef.Index);
-                    AddTriangle(left, _lVertices[0], _lVertices[2], _lVertices[3], triangleRef.Index);
+                    AddTriangle(left, _lVertices[0], _lVertices[1], _lVertices[2], triangleRef.refIndex);
+                    AddTriangle(left, _lVertices[0], _lVertices[2], _lVertices[3], triangleRef.refIndex);
                 }
             }
         }
@@ -287,13 +303,12 @@ namespace PathFinding.TriangleNavMesh.BSP
             var enumCount = (int) Side.EnumCount;
             var splitCounter = new int[enumCount];
             var count = triangleRefs.Count;
+            const int numVertices = 3;
             foreach (var triangle in triangleRefs)
-            {
-                var length = triangle.Vertices.Length;
-                for (int i = 0; i < length; i++)
+                for (var i = 0; i < numVertices; i++)
                 {
-                    var segment = new Segment(triangle.Vertices[i], triangle.Vertices[(i + 1) % length]);
-                    for (int j = 0; j < enumCount; j++)
+                    var segment = new Segment(triangle[i], triangle[(i + 1) % numVertices]);
+                    for (var j = 0; j < enumCount; j++)
                         splitCounter[j] = 0;
                     foreach (var tri in triangleRefs)
                         splitCounter[(int) SideOfSegment(segment, tri)]++;
@@ -311,7 +326,6 @@ namespace PathFinding.TriangleNavMesh.BSP
                         bestSplittingSegment = segment;
                     }
                 }
-            }
 
             return bestSplittingSegment;
         }
@@ -326,9 +340,9 @@ namespace PathFinding.TriangleNavMesh.BSP
         private static Side SideOfSegment(Segment segment, TriangleRef triangleRef)
         {
             var vector = segment.vector;
-            var side_a = Mathematics.Cross(vector, triangleRef.V0 - segment.p0);
-            var side_b = Mathematics.Cross(vector, triangleRef.V1 - segment.p0);
-            var side_c = Mathematics.Cross(vector, triangleRef.V2 - segment.p0);
+            var side_a = Mathematics.Cross(vector, triangleRef.v0 - segment.p0);
+            var side_b = Mathematics.Cross(vector, triangleRef.v1 - segment.p0);
+            var side_c = Mathematics.Cross(vector, triangleRef.v2 - segment.p0);
             var right_side = false;
             if (side_a != 0) right_side = side_a > 0;
             if (side_b != 0) right_side = side_b > 0;

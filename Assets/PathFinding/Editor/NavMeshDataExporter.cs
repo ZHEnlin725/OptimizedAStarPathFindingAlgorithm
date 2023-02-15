@@ -3,6 +3,7 @@ using System.Text;
 using PathFinding.TriangleNavMesh;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.SceneManagement;
 
 namespace PathFinding.Editor
@@ -34,7 +35,7 @@ namespace PathFinding.Editor
 
         private static void ExportNavMeshData(string path)
         {
-            var triangulation = UnityEngine.AI.NavMesh.CalculateTriangulation();
+            var triangulation = NavMesh.CalculateTriangulation();
             NavMeshUtils.MergeVertices(triangulation.indices, triangulation.vertices, out var mergedIndices,
                 out var mergedVertices);
 
@@ -44,18 +45,20 @@ namespace PathFinding.Editor
                 foreach (var vertex in vertices)
                     navMeshDataBuilder.AppendLine($"v {vertex.x} {vertex.y} {vertex.z}");
                 var length = indices.Length;
-                for (int i = 0; i < length; i += 3)
+                for (var i = 0; i < length; i += 3)
                     navMeshDataBuilder.AppendLine($"f {indices[i] + 1} {indices[i + 1] + 1} {indices[i + 2] + 1}");
                 return navMeshDataBuilder.ToString();
             }
 
             using (var streamWriter = new StreamWriter(path))
+            {
                 streamWriter.Write(dumpTriangulation(mergedVertices, mergedIndices));
+            }
         }
 
         private static void ExportTriangleMeshData(string path)
         {
-            var triangulation = UnityEngine.AI.NavMesh.CalculateTriangulation();
+            var triangulation = NavMesh.CalculateTriangulation();
             NavMeshUtils.MergeVertices(triangulation.indices, triangulation.vertices, out var mergedIndices,
                 out var mergedVertices);
             var triangleMeshData = new TriangleMeshData(mergedIndices, mergedVertices);

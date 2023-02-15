@@ -12,36 +12,13 @@ namespace PathFinding.Core
      */
     public abstract class PathFinderBase<T>
     {
-        protected enum NodeCategory : byte
-        {
-            Unvisited,
-            Opened,
-            Closed
-        }
+        private readonly Dictionary<T, Node> nodeDict;
 
-        protected sealed class Node : IComparable<Node>
-        {
-            public int version;
-
-            public NodeCategory category;
-
-            public T node;
-            public IRoute<T> route;
-
-            public float cost;
-            public float estimate;
-
-            public float totalCost => cost + estimate;
-
-            public int CompareTo(Node other) => (int) Math.Ceiling(totalCost - other.totalCost);
-        }
+        private readonly BinaryHeap<Node> openList;
 
         private int signals;
 
         private int version;
-
-        private readonly BinaryHeap<Node> openList;
-        private readonly Dictionary<T, Node> nodeDict;
 
         protected PathFinderBase(int capacity = 32)
         {
@@ -118,6 +95,32 @@ namespace PathFinding.Core
                 pair.Value.version = -1;
         }
 
+        protected enum NodeCategory : byte
+        {
+            Unvisited,
+            Opened,
+            Closed
+        }
+
+        protected sealed class Node : IComparable<Node>
+        {
+            public NodeCategory category;
+
+            public float cost;
+            public float estimate;
+
+            public T node;
+            public IRoute<T> route;
+            public int version;
+
+            public float totalCost => cost + estimate;
+
+            public int CompareTo(Node other)
+            {
+                return (int) Math.Ceiling(totalCost - other.totalCost);
+            }
+        }
+
         #region Protected Methods
 
         protected virtual bool search(ITopology<T> topology, T origin, T dest)
@@ -147,7 +150,6 @@ namespace PathFinding.Core
                 }
 
                 visitRoutes(topology, node, dest);
-                
             } while (openList.Count > 0);
 
             Interlocked.Decrement(ref signals);
@@ -161,10 +163,10 @@ namespace PathFinding.Core
 
             var count = routes?.Count ?? -1;
 
-            for (int i = 0; i < count; i++)
+            for (var i = 0; i < count; i++)
             {
                 var route = routes[i];
-                
+
                 var destNode = getOrCreateNode(route.dest);
 
                 var cost = node.cost + route.cost;

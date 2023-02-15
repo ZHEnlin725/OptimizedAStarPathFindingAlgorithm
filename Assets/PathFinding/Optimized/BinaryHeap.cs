@@ -14,26 +14,15 @@ namespace PathFinding.Optimized
         }
 
         private const int Top = 1;
-
-        private int _tail;
-        private T[] _array;
-        private readonly HeapType _heapType;
         private readonly Func<T, T, int> _compareFunc;
+        private readonly HeapType _heapType;
+
+        private readonly Stack<int> _walkStack = new Stack<int>();
 
         private readonly object synclock = new object();
+        private T[] _array;
 
-        public int Count
-        {
-            get
-            {
-                lock (synclock)
-                {
-                    return _tail;
-                }
-            }
-        }
-
-        protected bool IsValueType { get; }
+        private int _tail;
 
         public BinaryHeap(HeapType heapType, int capacity = 1) : this((x, y) => ((IComparable<T>) x).CompareTo(y),
             heapType, capacity)
@@ -55,6 +44,19 @@ namespace PathFinding.Optimized
             IsValueType = typeof(T).IsValueType;
         }
 
+        public int Count
+        {
+            get
+            {
+                lock (synclock)
+                {
+                    return _tail;
+                }
+            }
+        }
+
+        protected bool IsValueType { get; }
+
         public virtual T Peek()
         {
             lock (synclock)
@@ -63,7 +65,10 @@ namespace PathFinding.Optimized
             }
         }
 
-        public virtual T Pop() => RemoveAt(Top);
+        public virtual T Pop()
+        {
+            return RemoveAt(Top);
+        }
 
         public virtual void Push(T v)
         {
@@ -78,13 +83,11 @@ namespace PathFinding.Optimized
         public virtual void Remove(T v)
         {
             for (var i = Top; i < _tail; i++)
-            {
                 if (IsValueType ? _compareFunc(v, _array[i]) == 0 : ReferenceEquals(v, _array[i]))
                 {
                     RemoveAt(i);
                     break;
                 }
-            }
         }
 
         public virtual T RemoveAt(int index)
@@ -108,8 +111,6 @@ namespace PathFinding.Optimized
                 if (total) _array = new T[1];
             }
         }
-
-        private readonly Stack<int> _walkStack = new Stack<int>();
 
         public virtual void Walk(int parent, WalkFunc func) //前序遍历
         {
@@ -152,7 +153,7 @@ namespace PathFinding.Optimized
             {
                 int left = index << 1, right = left + 1;
                 if (left > _tail) break;
-                var swap = right <= _tail ? (Swappable(right, left) ? right : left) : left;
+                var swap = right <= _tail ? Swappable(right, left) ? right : left : left;
                 if (!Swappable(swap, index)) break;
                 Swap(swap, index);
                 index = swap;
@@ -185,6 +186,9 @@ namespace PathFinding.Optimized
             return _heapType == HeapType.Maximum ? result > 0 : result < 0;
         }
 
-        protected virtual void Insert(int index, T value) => _array[index] = value;
+        protected virtual void Insert(int index, T value)
+        {
+            _array[index] = value;
+        }
     }
 }

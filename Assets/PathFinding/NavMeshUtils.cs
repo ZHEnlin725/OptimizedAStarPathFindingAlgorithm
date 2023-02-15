@@ -23,13 +23,15 @@ namespace PathFinding
             var tempIndices = new List<int>();
             var tempVertices = new List<Vector3>();
 
-            bool needMerge(Vector3 lhs, Vector3 rhs, float gap) =>
-                (lhs - rhs).sqrMagnitude <= gap;
+            bool needMerge(Vector3 lhs, Vector3 rhs, float gap)
+            {
+                return (lhs - rhs).sqrMagnitude <= gap;
+            }
 
             bool mergeable(Vector3 vertex, float gap, Action<Vector3, int> onmerged = null)
             {
                 var merge = false;
-                for (int i = 0; i < tempVertices.Count; i++)
+                for (var i = 0; i < tempVertices.Count; i++)
                 {
                     if (!needMerge(vertex, tempVertices[i], gap))
                         continue;
@@ -48,7 +50,7 @@ namespace PathFinding
 
             const float epsilon = 0.001f;
 
-            for (int i = 0; i < rawIndices.Count;)
+            for (var i = 0; i < rawIndices.Count;)
             {
                 var i0 = rawIndices[i++];
                 var i1 = rawIndices[i++];
@@ -70,7 +72,7 @@ namespace PathFinding
 
             var indicesCount = tempIndices.Count;
             mergedIndices = new int[indicesCount];
-            for (int i = 0; i < indicesCount; i++)
+            for (var i = 0; i < indicesCount; i++)
             {
                 var upvalue_i = i;
                 var upvalue_indices = mergedIndices;
@@ -90,7 +92,6 @@ namespace PathFinding
             VertexDict.Clear();
             var mergedCount = 0;
             for (var i = 0; i < indices.Length; i++)
-            {
                 if (!VertexDict.TryGetValue(vertices[indices[i]], out var indicesIndex))
                 {
                     VertexDict.Add(vertices[indices[i]], i);
@@ -101,7 +102,6 @@ namespace PathFinding
                     mergedCount++;
                     indices[i] = indices[indicesIndex];
                 }
-            }
 
             Debug.Log($"Indices Merged Count:{mergedCount}");
         }
@@ -110,7 +110,7 @@ namespace PathFinding
         {
             if (vertices == null || Math.Abs(scale - 1) < float.Epsilon) return;
 
-            for (int i = 0; i < vertices.Length; i++)
+            for (var i = 0; i < vertices.Length; i++)
             {
                 vertices[i].x += -origin.x; // 缩放移动
                 vertices[i].z += -origin.y;

@@ -2,55 +2,22 @@
 using System.Collections.Generic;
 using PathFinding.Core;
 using UnityEngine;
-using Debug = UnityEngine.Debug;
 
 namespace PathFinding.TriangleNavMesh
 {
     public class TrianglePath : IPath<IRoute<Triangle>>
     {
-        private struct Funnel
-        {
-            public float LeftPortalY, RightPortalY;
-
-            public Vector2 Apex, LeftPortal, RightPortal;
-
-            public Vector2 LeftVector => LeftPortal - Apex;
-
-            public Vector2 RightVector => RightPortal - Apex;
-
-            public Funnel(Vector3 apex, Vector3 leftPortal, Vector3 rightPortal)
-            {
-                Apex = new Vector2(apex.x, apex.z);
-                LeftPortalY = leftPortal.y;
-                LeftPortal = new Vector2(leftPortal.x, leftPortal.z);
-                RightPortalY = rightPortal.y;
-                RightPortal = new Vector2(rightPortal.x, rightPortal.z);
-            }
-
-            public void SetApex(Vector3 apex) => Apex = new Vector2(apex.x, apex.z);
-
-            public void SetLeft(Vector3 portal)
-            {
-                LeftPortalY = portal.y;
-                LeftPortal = new Vector2(portal.x, portal.z);
-            }
-
-            public void SetRight(Vector3 portal)
-            {
-                RightPortalY = portal.y;
-                RightPortal = new Vector2(portal.x, portal.z);
-            }
-        }
-
-        public Vector3 eulerAngles;
-        
-        public Vector3 origin, dest;
+        private readonly List<Vector3> _buffer = new List<Vector3>();
 
         private SharedSide _last;
 
-        private List<Vector3> _buffer = new List<Vector3>();
+        private readonly List<IRoute<Triangle>> _routes = new List<IRoute<Triangle>>();
 
-        private List<IRoute<Triangle>> _routes = new List<IRoute<Triangle>>();
+        public Vector3 eulerAngles;
+
+        public Vector3 origin, dest;
+
+        private int cnt => _routes.Count;
 
         public IList<Vector3> Waypoints()
         {
@@ -72,7 +39,7 @@ namespace PathFinding.TriangleNavMesh
                     matrix.MultiplyPoint(side.p1));
                 int leftIndex = 0, rightIndex = 0;
                 var time = DateTime.Now;
-                for (int i = 1; i < count; i++)
+                for (var i = 1; i < count; i++)
                 {
                     if ((DateTime.Now - time).TotalMilliseconds > 1000)
                     {
@@ -151,15 +118,62 @@ namespace PathFinding.TriangleNavMesh
             return _buffer;
         }
 
-        private int cnt => _routes.Count;
+        public void Add(IRoute<Triangle> node)
+        {
+            _routes.Add(node);
+        }
 
-        public void Add(IRoute<Triangle> node) => _routes.Add(node);
+        public void Reverse()
+        {
+            _routes.Reverse();
+        }
 
-        public void Reverse() => _routes.Reverse();
+        public void Clear()
+        {
+            _routes.Clear();
+        }
 
-        public void Clear() => _routes.Clear();
+        private SharedSide SharedSide(int index)
+        {
+            return (SharedSide) (index < cnt ? _routes[index] : _last);
+        }
 
-        private SharedSide SharedSide(int index) => (SharedSide) (index < cnt ? _routes[index] : _last);
+        private struct Funnel
+        {
+            public float LeftPortalY, RightPortalY;
+
+            public Vector2 Apex, LeftPortal, RightPortal;
+
+            public Vector2 LeftVector => LeftPortal - Apex;
+
+            public Vector2 RightVector => RightPortal - Apex;
+
+            public Funnel(Vector3 apex, Vector3 leftPortal, Vector3 rightPortal)
+            {
+                Apex = new Vector2(apex.x, apex.z);
+                LeftPortalY = leftPortal.y;
+                LeftPortal = new Vector2(leftPortal.x, leftPortal.z);
+                RightPortalY = rightPortal.y;
+                RightPortal = new Vector2(rightPortal.x, rightPortal.z);
+            }
+
+            public void SetApex(Vector3 apex)
+            {
+                Apex = new Vector2(apex.x, apex.z);
+            }
+
+            public void SetLeft(Vector3 portal)
+            {
+                LeftPortalY = portal.y;
+                LeftPortal = new Vector2(portal.x, portal.z);
+            }
+
+            public void SetRight(Vector3 portal)
+            {
+                RightPortalY = portal.y;
+                RightPortal = new Vector2(portal.x, portal.z);
+            }
+        }
 
         #region Draw Gizmos
 

@@ -29,13 +29,13 @@ namespace PathFinding.TriangleNavMesh
             {
                 var indicesLength = indices?.Length ?? -1;
                 stream.WriteInt32(indicesLength);
-                for (int i = 0; i < indicesLength; i++)
+                for (var i = 0; i < indicesLength; i++)
                     stream.WriteInt32(indices[i]);
 
                 var verticesLength = vertices?.Length ?? -1;
                 stream.WriteInt32(verticesLength);
-                for (int i = 0; i < verticesLength; i++)
-                for (int j = 0; j < 3; j++)
+                for (var i = 0; i < verticesLength; i++)
+                for (var j = 0; j < 3; j++)
                     stream.WriteSingle(vertices[i][j]);
 
                 // for (int i = 0; i < 3; i++)
@@ -56,12 +56,12 @@ namespace PathFinding.TriangleNavMesh
             {
                 var indicesLength = stream.ReadInt32();
                 indices = new int[indicesLength];
-                for (int i = 0; i < indicesLength; i++)
+                for (var i = 0; i < indicesLength; i++)
                     indices[i] = stream.ReadInt32();
                 var verticesLength = stream.ReadInt32();
                 vertices = new Vector3[verticesLength];
-                for (int i = 0; i < verticesLength; i++)
-                for (int j = 0; j < 3; j++)
+                for (var i = 0; i < verticesLength; i++)
+                for (var j = 0; j < 3; j++)
                     vertices[i][j] = stream.ReadSingle();
                 // for (int i = 0; i < 3; i++)
                 // size[i] = stream.ReadSingle();

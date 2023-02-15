@@ -14,7 +14,7 @@ namespace PathFinding.TriangleNavMesh.BSP
             var count = triangles.Count;
             var triangleRefs = new List<TriangleRef>(count);
             var matrix = Mathematics.InverseRotate(eulerAngles);
-            for (int i = 0; i < count; i++)
+            for (var i = 0; i < count; i++)
                 triangleRefs.Add(new TriangleRef(i,
                     matrix.MultiplyPoint(triangles[i].v0),
                     matrix.MultiplyPoint(triangles[i].v1),
@@ -23,11 +23,16 @@ namespace PathFinding.TriangleNavMesh.BSP
             _root.Init(this, triangleRefs, 1);
         }
 
-        public int Query(Vector2 pos) => 
-            _root.Query(pos);
+        public int Query(Vector2 pos)
+        {
+            return _root.Query(pos);
+        }
 
 #if UNITY_EDITOR
-        public void OnDrawGizmos(int depth = 0) => _root.OnDrawGizmos(depth);
+        public void OnDrawGizmos(int depth = 0)
+        {
+            _root.OnDrawGizmos(depth);
+        }
 #endif
     }
 }
