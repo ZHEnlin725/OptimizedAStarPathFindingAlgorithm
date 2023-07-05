@@ -14,7 +14,7 @@ namespace PathFinding.Core
     {
         private readonly Dictionary<T, Node> nodeDict;
 
-        private readonly BinaryHeap<Node> openList;
+        private readonly IOpenList<Node> openList;
 
         private int signals;
 
@@ -25,7 +25,7 @@ namespace PathFinding.Core
             openList = new FastBinaryHeap<Node>(BinaryHeap<Node>.HeapType.Minimum, capacity);
             nodeDict = new Dictionary<T, Node>(capacity);
         }
-
+        
         public bool Search(ITopology<T> topology, Vector3 from, Vector3 to, IPath<T> path)
         {
             T origin = topology.Query(from), dest = topology.Query(to);
@@ -150,7 +150,7 @@ namespace PathFinding.Core
                 }
 
                 visitRoutes(topology, node, dest);
-            } while (openList.Count > 0);
+            } while (!openList.isEmpty);
 
             Interlocked.Decrement(ref signals);
 

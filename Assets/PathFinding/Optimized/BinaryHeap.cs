@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace PathFinding.Optimized
 {
-    public class BinaryHeap<T>
+    public class BinaryHeap<T> : IOpenList<T>
     {
         public delegate bool WalkFunc(T value);
 
@@ -55,6 +55,8 @@ namespace PathFinding.Optimized
             }
         }
 
+        public bool isEmpty => Count == 0;
+
         protected bool IsValueType { get; }
 
         public virtual T Peek()
@@ -103,12 +105,12 @@ namespace PathFinding.Optimized
             }
         }
 
-        public virtual void Clear(bool total = false)
+        public virtual void Clear(bool release = false)
         {
             lock (synclock)
             {
                 _tail = 0;
-                if (total) _array = new T[1];
+                if (release) _array = new T[1];
             }
         }
 
