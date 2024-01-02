@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
+using PathFinding;
 using PathFinding.TriangleNavMesh;
 using UnityEngine;
 
@@ -42,6 +43,7 @@ public class PathFindingTest : MonoBehaviour
                     {
                         pathBuffer.Clear();
                         pathBuffer.AddRange(list);
+                        Mathematics.OptimizePoints(pathBuffer);
                     }, () => { Debug.LogError("Failed to finding path !!!"); });
                 }
                 else
@@ -51,6 +53,7 @@ public class PathFindingTest : MonoBehaviour
                     {
                         pathBuffer.Clear();
                         pathBuffer.AddRange(waypoints);
+                        Mathematics.OptimizePoints(pathBuffer);
                     }
                     else
                     {

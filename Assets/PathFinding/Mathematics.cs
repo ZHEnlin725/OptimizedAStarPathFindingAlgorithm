@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace PathFinding
@@ -153,6 +154,85 @@ namespace PathFinding
                 new Vector4(axisX.y, axisY.y, axisZ.y, 0),
                 new Vector4(axisX.z, axisY.z, axisZ.z, 0),
                 new Vector4(0, 0, 0, 1));
+        }
+
+        public static void OptimizePoints(IList<Vector3> points, int start = -1, int end = -1, int bezierSoftness = 5)
+        {
+            var pointsCount = points?.Count ?? 0;
+            if (pointsCount > 2)
+            {
+                var last = pointsCount - 1;
+                start = start > 0 ? Mathf.Clamp(0, last, start) : 0;
+                end = end > 0 ? Mathf.Clamp(0, last, end) : last;
+
+                var indexesBuffer = new List<int>();
+                var pointsBuffer0 = new List<Vector3>();
+                int i0 = start, i1 = start + 1, i2 = start + 2;
+                var v0 = points[i0]; //首节点必加
+                indexesBuffer.Add(i0);
+                while (i2 <= end)
+                {
+                    var v1 = points[i1];
+                    var v2 = points[i2];
+                    var d1 = (v1 - v0).normalized;
+                    var d2 = (v2 - v0).normalized;
+                    var angle = Vector3.Angle(d1, d2);
+                    if (Mathf.Abs(angle) < float.Epsilon)
+                    {
+                        indexesBuffer.Remove(i1);
+                        indexesBuffer.Add(i2);
+                    }
+                    else
+                    {
+                        indexesBuffer.Remove(i1);
+                        indexesBuffer.Add(i1);
+                        indexesBuffer.Add(i2);
+                    }
+
+                    i1 = i2++;
+                    v0 = v1;
+                }
+
+                foreach (var i in indexesBuffer)
+                    pointsBuffer0.Add(points[i]);
+
+                var count = pointsBuffer0.Count;
+                points.Clear();
+                if (count > 2)
+                {
+                    var pointsBuffer1 = new List<Vector3>();
+                    pointsBuffer1.Add(pointsBuffer0[0]);
+                    for (int i = 0; i < count - 2; i++)
+                    {
+                        Vector3 p0 = pointsBuffer0[i], p1 = pointsBuffer0[i + 1], p2 = pointsBuffer0[i + 2];
+                        var p0p1 = Vector3.Lerp(p0, p1, 0.85f);
+                        var p2p1 = Vector3.Lerp(p2, p1, 0.85f);
+                        for (int j = 0; j <= bezierSoftness; j++)
+                            pointsBuffer1.Add(Bezier(p0p1, p1, p2p1, j * 1f / bezierSoftness));
+                    }
+
+                    pointsBuffer1.Add(pointsBuffer0[count - 1]);
+
+                    foreach (var point in pointsBuffer1)
+                        points.Add(point);
+                    // ListPool<Vector3>.Release(pointsBuffer1);
+                }
+                else
+                {
+                    foreach (var point in pointsBuffer0)
+                        points.Add(point);
+                }
+
+                // ListPool<int>.Release(indexesBuffer);
+                // ListPool<Vector3>.Release(pointsBuffer0);
+            }
+        }
+
+        private static Vector3 Bezier(Vector3 p0, Vector3 p1, Vector3 p2, float t)
+        {
+            var p0p1 = Vector3.Lerp(p0, p1, t);
+            var p1p2 = Vector3.Lerp(p1, p2, t);
+            return Vector3.Lerp(p0p1, p1p2, t);
         }
 
         public static Vector2 ToVector2XZ(this Vector3 vector3, Vector2 offset = default)
